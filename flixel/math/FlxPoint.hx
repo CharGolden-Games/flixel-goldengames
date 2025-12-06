@@ -71,12 +71,19 @@ import openfl.geom.Point;
  */
 @:forward abstract FlxPoint(FlxBasePoint) to FlxBasePoint from FlxBasePoint 
 {
+	
+	/**
+	 * Vector components less than this are considered zero, to account for rounding errors
+	 */
 	public static inline var EPSILON:Float = 0.0000001;
 	public static inline var EPSILON_SQUARED:Float = EPSILON * EPSILON;
+	
+	/**
+	 * Vector lengths less than this are considered zero, to account for rounding errors
+	 */
+	public static inline var EPSILON_LENGTH:Float = EPSILON * FlxMath.SQUARE_ROOT_OF_TWO;
 
 	static var _point1 = new FlxPoint();
-	static var _point2 = new FlxPoint();
-	static var _point3 = new FlxPoint();
 
 	/**
 	 * Recycle or create new FlxPoint.
@@ -162,7 +169,7 @@ import openfl.geom.Point;
 	@:op(A += B)
 	static inline function plusEqualOp(a:FlxPoint, b:FlxPoint):FlxPoint
 	{
-		return a.addPoint(b);
+		return a.add(b);
 	}
 
 	/**
@@ -172,7 +179,7 @@ import openfl.geom.Point;
 	@:op(A -= B)
 	static inline function minusEqualOp(a:FlxPoint, b:FlxPoint):FlxPoint
 	{
-		return a.subtractPoint(b);
+		return a.subtract(b);
 	}
 
 	/**
@@ -357,7 +364,7 @@ import openfl.geom.Point;
 	 * @param   point  The point to add to this point
 	 * @return  This point.
 	 */
-	// @:deprecated("addPoint is deprecated, use add(point), instead")// 6.0.0
+	@:deprecated("addPoint is deprecated, use add(point), instead")// 6.1.2
 	public inline function addPoint(point:FlxPoint):FlxPoint
 	{
 		return add(point);
@@ -408,7 +415,7 @@ import openfl.geom.Point;
 	 * @param   point  The point to subtract from this point
 	 * @return  This point.
 	 */
-	// @:deprecated("subtractPoint is deprecated, use subtract(point), instead")// 6.0.0
+	@:deprecated("subtractPoint is deprecated, use subtract(point), instead")// 6.1.2
 	public inline function subtractPoint(point:FlxPoint):FlxPoint
 	{
 		subtract(point.x, point.y);
@@ -470,7 +477,7 @@ import openfl.geom.Point;
 	 * @param   point  The x and y scale coefficient
 	 * @return  scaled point
 	 */
-	// @:deprecated("scalePoint is deprecated, use scale(point), instead")// 6.0.0
+	@:deprecated("scalePoint is deprecated, use scale(point), instead")// 6.1.2
 	public inline function scalePoint(point:FlxPoint):FlxPoint
 	{
 		scale(point.x, point.y);
@@ -497,7 +504,7 @@ import openfl.geom.Point;
 	 */
 	public inline function addNew(p:FlxPoint):FlxPoint
 	{
-		return clone().addPoint(p);
+		return clone().add(p);
 	}
 
 	/**
@@ -508,7 +515,7 @@ import openfl.geom.Point;
 	 */
 	public inline function subtractNew(p:FlxPoint):FlxPoint
 	{
-		return clone().subtractPoint(p);
+		return clone().subtract(p);
 	}
 
 	/**
@@ -542,7 +549,7 @@ import openfl.geom.Point;
 	 * @param   p  Any Point.
 	 * @return  A reference to itself.
 	 */
-	// @:deprecated("copyFromFlash is deprecated, use copyFrom, instead")// 6.0.0
+	@:deprecated("copyFromFlash is deprecated, use copyFrom, instead")// 6.1.2
 	public inline function copyFromFlash(p:Point):FlxPoint
 	{
 		return set(p.x, p.y);
@@ -583,7 +590,7 @@ import openfl.geom.Point;
 	 * @param   p  Any Point.
 	 * @return  A reference to the altered point parameter.
 	 */
-	// @:deprecated("copyToFlash is deprecated, use copyTo, instead")// 6.0.0
+	@:deprecated("copyToFlash is deprecated, use copyTo, instead")// 6.1.2
 	public inline function copyToFlash(?p:Point):Point
 	{
 		return copyTo(p != null ? p : new Point());
@@ -677,7 +684,7 @@ import openfl.geom.Point;
 	 */
 	public function pivotRadians(pivot:FlxPoint, radians:Float):FlxPoint
 	{
-		_point1.copyFrom(this).subtractPoint(pivot);
+		_point1.copyFrom(this).subtract(pivot);
 		_point1.radians += radians;
 		set(_point1.x + pivot.x, _point1.y + pivot.y);
 		pivot.putWeak();
@@ -845,7 +852,12 @@ import openfl.geom.Point;
 	 */
 	inline function dotProductWeak(p:FlxPoint):Float
 	{
-		return x * p.x + y * p.y;
+		return dotProductXY(p.x, p.y);
+	}
+	
+	inline function dotProductXY(x:Float, y:Float):Float
+	{
+		return this.x * x + this.y * y;
 	}
 
 	/**
@@ -856,9 +868,10 @@ import openfl.geom.Point;
 	 */
 	public inline function dotProdWithNormalizing(p:FlxPoint):Float
 	{
-		var normalized:FlxPoint = p.clone(_point1).normalize();
+		final length = p.length;
+		final result = length < EPSILON_LENGTH ? 0 : dotProductXY(p.x / length, p.y / length);
 		p.putWeak();
-		return dotProductWeak(normalized);
+		return result;
 	}
 
 	/**
@@ -929,7 +942,8 @@ import openfl.geom.Point;
 	 */
 	public inline function isZero():Bool
 	{
-		return Math.abs(x) < EPSILON && Math.abs(y) < EPSILON;
+		// i.e: x*x < EPSILON_SQUARED && y*y < EPSILON_SQUARED;
+		return lengthSquared < 2 * EPSILON_SQUARED;
 	}
 
 	/**
@@ -1033,7 +1047,7 @@ import openfl.geom.Point;
 		{
 			p = get();
 		}
-		p.set(-y, x);
+		p.set(rx, ry);
 		return p;
 	}
 
@@ -1046,7 +1060,7 @@ import openfl.geom.Point;
 		{
 			p = get();
 		}
-		p.set(y, -x);
+		p.set(lx, ly);
 		return p;
 	}
 
@@ -1058,9 +1072,9 @@ import openfl.geom.Point;
 		return set(x * -1, y * -1);
 	}
 
-	public inline function negateNew():FlxPoint
+	public inline function negateNew(?result:FlxPoint):FlxPoint
 	{
-		return clone().negate();
+		return clone(result).negate();
 	}
 
 	/**
@@ -1136,7 +1150,12 @@ import openfl.geom.Point;
 	 */
 	inline function perpProductWeak(p:FlxPoint):Float
 	{
-		return lx * p.x + ly * p.y;
+		return perpProductXY(p.x, p.y);
+	}
+	
+	inline function perpProductXY(x:Float, y:Float):Float
+	{
+		return lx * x + ly * y;
 	}
 
 	/**
@@ -1354,12 +1373,13 @@ import openfl.geom.Point;
 	 */
 	public inline function bounceWithFriction(normal:FlxPoint, bounceCoeff:Float = 1, friction:Float = 0):FlxPoint
 	{
-		var p1:FlxPoint = projectToNormalizedWeak(normal.rightNormal(_point3), _point1);
-		var p2:FlxPoint = projectToNormalizedWeak(normal, _point2);
-		var bounceX:Float = -p2.x;
-		var bounceY:Float = -p2.y;
-		var frictionX:Float = p1.x;
-		var frictionY:Float = p1.y;
+		final dp = dotProductWeak(normal);
+		final bounceX = -normal.x * dp;
+		final bounceY = -normal.y * dp;
+		final pp = perpProductWeak(normal);
+		final frictionX = normal.rx * pp;
+		final frictionY = normal.ry * pp;
+		
 		normal.putWeak();
 		
 		return set(bounceX * bounceCoeff + frictionX * friction, bounceY * bounceCoeff + frictionY * friction);
