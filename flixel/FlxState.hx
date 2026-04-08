@@ -44,6 +44,11 @@ class FlxState extends FlxContainer
 	 * The natural background color the cameras default to. In `AARRGGBB` format.
 	 */
 	public var bgColor(get, set):FlxColor;
+
+	/**
+	 * Current Elapsed of the update() function.
+	 */
+	public var curElapsed:Float = 0;
 	
 	/**
 	 * The specific argument that was passed into `switchState` or `FlxGame.new`
@@ -222,7 +227,10 @@ class FlxState extends FlxContainer
 	function tryUpdate(elapsed:Float):Void
 	{
 		if (persistentUpdate || subState == null)
+		{
 			update(elapsed);
+			curElapsed = elapsed;
+		}
 
 		if (_requestSubStateReset)
 		{
