@@ -383,6 +383,7 @@ class FlxSprite extends FlxObject
 		useFramePixels = FlxG.renderBlit;
 		if (SimpleGraphic != null)
 			loadGraphic(SimpleGraphic);
+		animation.onFinish.add(onFinishAnimation);
 	}
 
 	@:noCompletion
@@ -472,6 +473,12 @@ class FlxSprite extends FlxObject
 		clipRect = Sprite.clipRect;
 		return this;
 	}
+
+	/**
+	 * Called when an animation finishes
+	 * @param Name name of the animation
+	 */
+	public function onFinishAnimation(Name:String) {}
 
 	/**
 	 * Load an image from an embedded graphic file.
