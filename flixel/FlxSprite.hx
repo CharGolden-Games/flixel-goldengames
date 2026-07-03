@@ -383,7 +383,6 @@ class FlxSprite extends FlxObject
 		useFramePixels = FlxG.renderBlit;
 		if (SimpleGraphic != null)
 			loadGraphic(SimpleGraphic);
-		animation.onFinish.add(onFinishAnimation);
 	}
 
 	@:noCompletion
@@ -392,6 +391,7 @@ class FlxSprite extends FlxObject
 		super.initVars();
 
 		animation = new FlxAnimationController(this);
+		animation.onFinish.add(onFinishAnimation);
 
 		_flashPoint = new Point();
 		_flashRect = new Rectangle();
